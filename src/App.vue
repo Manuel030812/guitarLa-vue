@@ -1,6 +1,6 @@
 <script setup>
 
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted,watch } from 'vue';
 import { db } from './data/guitarras.js';
 import Guitarra from './components/Guitarra.vue';
 import Header from './components/Header.vue';
@@ -10,23 +10,42 @@ const guitarras = ref([]);
 const carrito = ref([]);
 const guitarra = ref({})
 
+watch(carrito,()=> {
+  // Cada vez que el carrito cambie, actualizamos el localStorage
+  guardarLocalStorage();
+}, { deep: true });
 
 onMounted(() => {
   guitarras.value = db;
   guitarra.value = db[3]
 
+  const carritoStorage = localStorage.getItem('carrito');
+  if (carritoStorage) {
+    carrito.value = JSON.parse(carritoStorage);
+  } else {
+    carrito.value = [];
+  }
+
 });
+
+const guardarLocalStorage = () => {
+  // Guardar el carrito en el localStorage
+  localStorage.setItem('carrito', JSON.stringify(carrito.value));
+};
+
 const agregarCarrito = (guitarra) => {
   const existeCarrito = carrito.value.findIndex(producto => producto.id === guitarra.id);
   if (existeCarrito >= 0) {
     // Si el producto ya existe en el carrito, incrementamos la cantidad
     carrito.value[existeCarrito].cantidad++;
-    return;
+    
   } else {
     // Si el producto no existe, lo agregamos al carrito
     guitarra.cantidad = 1; // Aseguramos que la guitarra tenga una cantidad inicial
     carrito.value.push(guitarra);
   }
+
+ 
 
 };
 
@@ -37,6 +56,8 @@ const decrementarCantidad = (id) => {
   if (carrito.value[index].cantidad <= 1) return; // Evita que la cantidad sea menor a 1
   carrito.value[index].cantidad--;
 
+  
+
 };
 
 const incrementarCantidad = (id) => {
@@ -45,6 +66,7 @@ const incrementarCantidad = (id) => {
   const index = carrito.value.findIndex(producto => producto.id === id);
   if (carrito.value[index].cantidad >= 5) return; // Evita errores si el producto no se encuentra
   carrito.value[index].cantidad++;
+  
   
 };
 
@@ -55,10 +77,13 @@ const eliminarProducto = (id) => {
   if (index !== -1) {
     carrito.value.splice(index, 1);
   }
+  
+
 };
 const vaciarCarrito = () => {
   // Lógica para vaciar el carrito
   carrito.value.splice(0, carrito.value.length);
+  
 };
 
 
